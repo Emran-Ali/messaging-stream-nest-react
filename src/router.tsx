@@ -1,11 +1,12 @@
-import { createBrowserRouter, Outlet } from "react-router-dom"
-import { AuthProvider } from "./context/AuthContext"
-import { NewChannel } from "./pages/channel/new"
-import { Home } from "./pages/Home"
-import { AuthLayout } from "./pages/layouts/AuthLayout"
-import { RootLayout } from "./pages/layouts/RootLayout"
-import { Login } from "./pages/Login"
-import { Signup } from "./pages/Signup"
+import { createBrowserRouter, Outlet } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Call from "./pages/call/Call";
+import { NewChannel } from "./pages/channel/new";
+import { Home } from "./pages/Home";
+import { AuthLayout } from "./pages/layouts/AuthLayout";
+import { RootLayout } from "./pages/layouts/RootLayout";
+import { Login } from "./pages/Login";
+import { Signup } from "./pages/Signup";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
             path: "/channel",
             children: [{ path: "new", element: <NewChannel /> }],
           },
+          {
+            path: "/call",
+            element: <Call />,
+          },
         ],
       },
       {
@@ -31,12 +36,12 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+]);
 
 function ContextWrapper() {
   return (
     <AuthProvider>
       <Outlet />
     </AuthProvider>
-  )
+  );
 }

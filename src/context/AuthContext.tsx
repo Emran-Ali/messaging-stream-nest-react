@@ -16,11 +16,17 @@ type AuthContext = {
   user?: User;
   streamChat?: StreamChat;
   signup: UseMutationResult<AxiosResponse, unknown, User>;
-  login: UseMutationResult<{ token: string; user: User }, unknown, string>;
+  login: UseMutationResult<
+    { token: string; user: User; streamToken: string },
+    unknown,
+    string
+  >;
   logout: UseMutationResult<AxiosResponse, unknown, void>;
+  streamToken?: string;
 };
 
 type User = {
+  id: string;
   email: string;
   name: string;
   photo?: string;
@@ -46,6 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
   const [user, setUser] = useLocalStorage<User>("user");
   const [token, setToken] = useLocalStorage<string>("token");
+  const [streamToken, setStreamToken] = useLocalStorage<string>("token");
   const [streamChat, setStreamChat] = useState<StreamChat>();
 
   const signup = useMutation({
@@ -57,17 +64,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
   });
 
+  type Data = { email: string; password: string };
+
   const login = useMutation({
-    mutationFn: (data: { email: string; password: string }) => {
+    mutationFn: (data: Data) => {
       return axios
-        .post(`${import.meta.env.VITE_SERVER_URL}/login`, data)
+        .post(`${import.meta.env.VITE_SERVER_URL}/auth/login`, data)
         .then((res) => {
-          return res.data as { token: string; user: User };
+          return res.data as { token: string; user: User; streamToken: string };
         });
     },
     onSuccess(data) {
       setUser(data.user);
       setToken(data.token);
+      setStreamToken(data.streamToken);
     },
   });
 
@@ -83,13 +93,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   useEffect(() => {
-    if (token == null || user == null) return;
+    if (streamToken == null || user == null) return;
     const chat = new StreamChat(import.meta.env.VITE_STREAM_API_KEY!);
 
     if (chat.tokenManager.token === token && chat.userID === user.id) return;
 
     let isInterrupted = false;
-    const connectPromise = chat.connectUser(user, token).then(() => {
+    const connectPromise = chat.connectUser(user, streamToken).then(() => {
       if (isInterrupted) return;
       setStreamChat(chat);
     });
@@ -102,10 +112,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         chat.disconnectUser();
       });
     };
-  }, [token, user]);
+  }, [streamToken, user]);
 
   return (
-    <Context.Provider value={{ signup, login, user, streamChat, logout }}>
+    <Context.Provider
+      value={{ signup, login, user, streamChat, logout, streamToken }}
+    >
       {children}
     </Context.Provider>
   );

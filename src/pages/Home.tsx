@@ -1,23 +1,39 @@
-import { useNavigate } from "react-router-dom"
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  LoadingIndicator,
-  Chat,
-  ChannelList,
   Channel,
-  Window,
+  ChannelHeader,
+  ChannelList,
+  Chat,
+  LoadingIndicator,
   MessageInput,
   MessageList,
-  ChannelHeader,
-} from "stream-chat-react"
-import { ChannelListMessengerProps } from "stream-chat-react/dist/components"
-import { useChatContext } from "stream-chat-react/dist/context"
-import { Button } from "../components/Button"
-import { useLoggedInAuth } from "../context/AuthContext"
+  Window,
+} from "stream-chat-react";
+import { ChannelListMessengerProps } from "stream-chat-react/dist/components";
+import { useChatContext } from "stream-chat-react/dist/context";
+import { Button } from "../components/Button";
+import { useLoggedInAuth } from "../context/AuthContext";
 
 export function Home() {
-  const { user, streamChat } = useLoggedInAuth()
+  const { user, streamChat } = useLoggedInAuth();
+  const [channels, setChannels] = useState([]);
+  useEffect(() => {
+    async function fetchChannels() {
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/stream/channel/${user.id}`
+      );
+      console.log(response);
 
-  if (streamChat == null) return <LoadingIndicator />
+      const data = await response.data;
+      setChannels(data);
+    }
+
+    fetchChannels();
+  }, []);
+
+  if (streamChat == null) return <LoadingIndicator />;
 
   return (
     <Chat client={streamChat}>
@@ -34,24 +50,24 @@ export function Home() {
         </Window>
       </Channel>
     </Chat>
-  )
+  );
 }
 
 function Channels({ loadedChannels }: ChannelListMessengerProps) {
-  const navigate = useNavigate()
-  const { logout } = useLoggedInAuth()
-  const { setActiveChannel, channel: activeChannel } = useChatContext()
+  const navigate = useNavigate();
+  const { logout } = useLoggedInAuth();
+  const { setActiveChannel, channel: activeChannel } = useChatContext();
 
   return (
     <div className="w-60 flex flex-col gap-4 m-3 h-full">
       <Button onClick={() => navigate("/channel/new")}>New Conversation</Button>
       <hr className="border-gray-500" />
       {loadedChannels != null && loadedChannels.length > 0
-        ? loadedChannels.map(channel => {
-            const isActive = channel === activeChannel
+        ? loadedChannels.map((channel) => {
+            const isActive = channel === activeChannel;
             const extraClasses = isActive
               ? "bg-blue-500 text-white"
-              : "hover:bg-blue-100 bg-gray-100"
+              : "hover:bg-blue-100 bg-gray-100";
             return (
               <button
                 onClick={() => setActiveChannel(channel)}
@@ -69,7 +85,7 @@ function Channels({ loadedChannels }: ChannelListMessengerProps) {
                   {channel.data?.name || channel.id}
                 </div>
               </button>
-            )
+            );
           })
         : "No Conversations"}
       <hr className="border-gray-500 mt-auto" />
@@ -77,5 +93,5 @@ function Channels({ loadedChannels }: ChannelListMessengerProps) {
         Logout
       </Button>
     </div>
-  )
+  );
 }
